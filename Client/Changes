@@ -1,5 +1,8 @@
 Revision history for Perl extension HTTunnel::Client.
 
+0.05  Mon Feb 14 10:37:26 EST 2005
+    - Fixed screwed-up test suite dependencies
+
 0.04  Sun Feb  6 19:38:03 EST 2005
     - Replaced HTTunnelForceHost/HTTunnelForcePort by HTTunnelAllowedTunnels
     - Implemented initial UDP support

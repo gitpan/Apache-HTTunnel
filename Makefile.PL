@@ -18,20 +18,25 @@ ModPerl::MM::WriteMakefile(
 		'File::FDkeeper' => 0,
 	}, 
 	clean => { 
-		FILES => "t/TEST t/httunnel.sock" 
+		FILES => "t/TEST t/httunnel.sock _Inline" 
 	},
 ) ;
 
 
 sub MY::postamble {
 	my $make = '' ;
+	$make = <<'MAKEFILE';
+
+install::
+	$(NOECHO)cd Client && $(MAKE) -f $(FIRST_MAKEFILE) install $(PASTHRU)
+MAKEFILE
+
 	if ($^O eq 'linux') { 
 		$make = <<'MAKEFILE';
 
 install::
-	$(NOECHO)cd Client && $(MAKE) -f $(FIRST_MAKEFILE) install $(PASTHRU)
 	mkdir -p /etc/httpd/conf.d
-	$(PERL) -MApache::HTTunnel=sample_config > /etc/httpd/conf.d/perl_httunnel.conf
+	$(TEST_F) /etc/httpd/conf/httpd.conf || $(PERL) -MApache::HTTunnel=sample_config > /etc/httpd/conf.d/perl_httunnel.conf
 
 MAKEFILE
 	}

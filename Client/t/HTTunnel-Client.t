@@ -1,14 +1,12 @@
 use strict ;
-use ExtUtils::MakeMaker ;
-use Apache::Test qw(plan ok skip have_lwp) ;
-use Apache::TestRequest qw(GET POST) ;
-use Apache::Const qw(:http) ;
+use Test ;
 use URI ;
 
 BEGIN {
 	my $nb_tests = 0 ;
 	if (! $HTTunnel::Client::Test::URL){
 		$HTTunnel::Client::Test = 1 ;
+		$HTTunnel::Client::Test::ExtraTests = 0 ;
 
 		if (! open(URL, "<t/server_url")){
 			plan(tests => 1) ;
@@ -26,15 +24,15 @@ BEGIN {
 		print STDERR "\nApache::HTTunnel server URL is $HTTunnel::Client::Test::URL\n" ;
 	}
 
-	plan(tests => 8, have_lwp) ;
+	plan(tests => 7 + $HTTunnel::Client::Test::ExtraTests) ;
 }
 
 if ($ENV{PERL_HTTUNNEL_TEST_JAVA}){
+	print STDERR "\n" unless $HTTunnel::Client::Test ;
 	print STDERR "Using Java client.\n" ;
 	require Inline::Java ;
 	Inline->bind(
 		Java => 'blib/lib/HTTunnel/Client.java',
-		CLASSPATH => './classes',
 	) ;
 }
 else {
@@ -63,10 +61,6 @@ my $port = $uri->port() ;
 ok($hc->get_peer_info(), qr/$port$/) ;
 $hc->close() ;
 ok(1) ;
-
-# Exceptions
-my $resp = GET $HTTunnel::Client::Test::URL ;
-ok($resp->code(), Apache::HTTP_METHOD_NOT_ALLOWED()) ;
 
 # We must return 1 here since this file ls required by the Apache::HTTunnel
 # test script.

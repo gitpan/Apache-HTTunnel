@@ -4,7 +4,7 @@ use strict ;
 use Carp ;
 
 
-$Apache::HTTunnel::VERSION = '0.04' ;
+$Apache::HTTunnel::VERSION = '0.05' ;
 
 
 sub import {
@@ -76,5 +76,6 @@ PerlPostConfigRequire	Apache/HTTunnel.pm
   SetHandler		perl-script
   PerlResponseHandler	Apache::HTTunnel
   PerlSetVar            HTTunnelAllowedTunnels "\
-    localhost => 22|53|80 "
+    localhost => 22|80, \
+    dns => 53 "
 </Location>

@@ -9,7 +9,6 @@ use IO::Select ;
 use IO::Pipe ;
 use IO::Handle ;
 BEGIN { eval { require Sys::Syslog } }
-use URI ;
 use HTTunnel::Client ;
 use Data::Dumper ;
 
@@ -99,7 +98,6 @@ while (1){
 		eval {
 			local $SIG{TERM} = 'IGNORE' if $cfg->{protocol} ne 'udp' ;
 
-			my $url = new URI($cfg->{url}) ;
 			$hc->proxy(['http'], $cfg->{http_proxy}) if $cfg->{http_proxy} ;
 			$hc->connect($cfg->{protocol}, $cfg->{remote_host}, $cfg->{remote_port}) ;
 			sdebug("Remote connection to $cfg->{remote_host}:$cfg->{remote_port} established") ;
