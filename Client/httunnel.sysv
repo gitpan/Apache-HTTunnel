@@ -15,7 +15,7 @@ httunnel=/usr/bin/httunnel
 prog=httunnel
 RETVAL=0
 
-ARGS="-d -f /etc/httunnel.d"
+ARGS="/etc/httunnel.d -d"
 
 start() {
 	echo -n $"Starting $prog: "

@@ -49,7 +49,7 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-- mod_perl 1.9919
+- mod_perl 1.999021
 - File::FDkeeper (which in turn will require File::FDpasser)
 
 

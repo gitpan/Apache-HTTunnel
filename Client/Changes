@@ -7,4 +7,8 @@ Revision history for Perl extension HTTunnel::Client.
 0.02  Wed Jan 26 20:26:42 EST 2005
     - Documentation fixes
 
+0.03  Thu Jan 27 19:07:26 EST 2005
+    - Fixed samepl.conf_
+    - Fixed httunnel.sysv that wouldn't start
+
 
