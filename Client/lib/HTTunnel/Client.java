@@ -1,11 +1,14 @@
 package HTTunnel ;
+import java.util.* ;
 import java.io.* ;
 import java.net.* ;
 
 
-class Client {
+public class Client {
 	private URL url = null ;
 	private String fhid = null ;
+	private String proto = null ;
+	private String peer_info = null ;
 
 
 	public Client(String _url) throws MalformedURLException {
@@ -17,7 +20,8 @@ class Client {
 		return connect(proto, host, port, 0) ;
 	}
 
-	public int connect(String proto, String host, int port, int timeout) throws ClientException {
+	public int connect(String _proto, String host, int port, int timeout) throws ClientException {
+		proto = _proto ;
 		if ((proto == null)||(proto.equals(""))){
 			proto = "tcp" ;
 		}
@@ -51,13 +55,26 @@ class Client {
 		}
 
 		while (true){
+			String addr = null ;
+			String port = null ;
 			String data = null ;
 			try {
 				data = execute(
 					"read", 
-					new String [] { fhid, (new Integer(len)).toString(),
+					new String [] { fhid, proto, (new Integer(len)).toString(),
 						(new Integer(timeout)).toString() }
 				) ;
+				StringTokenizer st = new StringTokenizer(data, ":", true) ;
+				addr = st.nextToken() ; 
+				st.nextToken() ; // waste ':'
+				port = st.nextToken() ; 
+				st.nextToken() ; // waste ':'
+				StringBuffer sbdata = new StringBuffer() ;
+				while (st.hasMoreTokens()){
+					sbdata.append(st.nextToken()) ;
+				}
+				peer_info = addr + ":" + port ;
+				data = sbdata.toString() ;
 			}
 			catch (ClientTimeoutException hcte){
 				continue ;
@@ -71,6 +88,11 @@ class Client {
 	}
 
 
+	public String get_peer_info(){
+		return peer_info ;
+	}
+
+
 	public int print(String data) throws ClientException {
 		if (fhid == null){
 			throw new ClientException("HTTunnel.Client object is not connected") ;
@@ -78,7 +100,7 @@ class Client {
 
 		execute(
 			"write",
-			new String [] { fhid },
+			new String [] { fhid, proto },
 			data
 		) ;
 
@@ -200,58 +222,6 @@ class Client {
 	private class ClientTimeoutException extends ClientException {
 		ClientTimeoutException(){
 			super("Apache::HTTunnel voluntary timeout") ;
-		}
-	}
-
-
-
-	static public void test_server() throws Exception {
-		ServerSocket ss = new ServerSocket(9876) ;
-		class Reader implements Runnable {
-			private Client hc = null ;
-			private OutputStream os = null ;
-			public Reader(Client _hc, OutputStream _os){
-				hc = _hc ;
-				os = _os ;
-			}
-			public void run(){
-				try {
-				    String data = null ;
-					while ((data = hc.read(16384)) != null){ os.write(data.getBytes()) ; }
-				} catch (Exception e){e.printStackTrace() ;}
-			}
-		} ;
-		while (true){
-		    Socket s = ss.accept() ;
-			InputStream is = s.getInputStream() ;
-			OutputStream os = s.getOutputStream() ;
-			Client hc = new Client("http://localhost/httunnel") ;
-			hc.connect("tcp", "localhost", 22) ;
-			(new Thread(new Reader(hc, os))).start() ;
-
-			byte b[] = new byte[16384] ;
-			while (is.read(b) != -1){ hc.print(new String(b)) ; }
-		}
-	}
-
-
- 	static public void test_simple() throws Exception {
-		Client hc = new Client("http://localhost/httunnel") ;
-		hc.connect("tcp", "localhost", 80) ;
-		hc.print("GET / HTTP/1.0\n\n") ;
-		String data = hc.read(1024) ;
-		System.out.println(data) ;
-		hc.close() ;
-	}
-
-
-	static public void main(String args[]){
-		try {
-			test_simple() ;
-			// test_server() ;
-    	}
-		catch (Exception e){
-			e.printStackTrace() ;
 		}
 	}
 }

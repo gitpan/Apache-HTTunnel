@@ -26,17 +26,25 @@ BEGIN {
 		print STDERR "\nApache::HTTunnel server URL is $HTTunnel::Client::Test::URL\n" ;
 	}
 
-	plan(tests => 7, have_lwp) ;
+	plan(tests => 8, have_lwp) ;
 }
 
-
-use HTTunnel::Client ;
+if ($ENV{PERL_HTTUNNEL_TEST_JAVA}){
+	print STDERR "Using Java client.\n" ;
+	require Inline::Java ;
+	Inline->bind(
+		Java => 'blib/lib/HTTunnel/Client.java',
+		CLASSPATH => './classes',
+	) ;
+}
+else {
+	require HTTunnel::Client ;
+}
 ok(1) ;
 
 # Regular usage
 my $hc = new HTTunnel::Client($HTTunnel::Client::Test::URL) ;
 my $uri = new URI($HTTunnel::Client::Test::URL) ;
-$hc->credentials($uri->host_port(), 'httunnel', 'httunnel','httunnel') ;
 
 ok($hc) ;
 $hc->connect('tcp', $uri->host(), $uri->port()) ;
@@ -50,14 +58,15 @@ if ($HTTunnel::Client::Test){
 else {
 	ok($data, qr/This is the index.html file\./) ;
 }
+
+my $port = $uri->port() ;
+ok($hc->get_peer_info(), qr/$port$/) ;
 $hc->close() ;
 ok(1) ;
 
 # Exceptions
-my $resp = GET $HTTunnel::Client::Test::URL, 
-	username => 'httunnel', password => 'httunnel' ;
+my $resp = GET $HTTunnel::Client::Test::URL ;
 ok($resp->code(), Apache::HTTP_METHOD_NOT_ALLOWED()) ;
-
 
 # We must return 1 here since this file ls required by the Apache::HTTunnel
 # test script.

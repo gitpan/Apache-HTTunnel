@@ -15,7 +15,7 @@ WriteMakefile(
 		'lib/HTTunnel/Client.pod' => '$(INST_MAN3DIR)/HTTunnel::Client.3pm'
 	},
 	clean             => {
-		FILES => "t/server_url lib/HTTunnel/HTTunnel"
+		FILES => "t/server_url lib/HTTunnel/HTTunnel classes _Inline"
 	},
 ) ;
 
@@ -34,10 +34,8 @@ install::
 J2SDK = /usr/java/j2sdk1.4.2_06
 
 java:
-	$(J2SDK)/bin/javac lib/HTTunnel/Client.java -d lib/HTTunnel
-
-java_test: java
-	$(J2SDK)/bin/java -classpath lib/HTTunnel HTTunnel.Client
+	mkdir -p classes
+	$(J2SDK)/bin/javac lib/HTTunnel/Client.java -d classes
 
 MAKEFILE
 	}
@@ -47,7 +45,7 @@ MAKEFILE
 
 
 if (! $Apache::HTTunnel::Makefile){
-	my $url = prompt("Please enter the URL of your Apache::HTTunnel server (for the test suite):", '') ;
+	my $url = prompt("Please enter the URL of your Apache::HTTunnel server (for the test suite):", 'http://localhost/httunnel') ;
 	open(URL, ">t/server_url") or die("Can't open 't/server_url' for writing: $!") ;
 	print URL "$url\n" ;
 	close(URL) ;

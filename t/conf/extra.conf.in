@@ -10,11 +10,7 @@ PerlPostConfigRequire	Apache/HTTunnel.pm
 <Location "/httunnel">
   SetHandler			perl-script
   PerlResponseHandler	Apache::HTTunnel 
-
-  Order deny,allow
-  Authname 'httunnel'
-  AuthType Basic
-  AuthUserFile @ServerRoot@/htpasswd
-  require valid-user
+  PerlSetVar			HTTunnelAllowedTunnels  "\
+	localhost => @Port@ "
 </Location>
 

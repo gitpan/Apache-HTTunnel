@@ -19,10 +19,11 @@ INSTALLATION
      % make install
 
      Note 1: The test suite will require the URL to an Apache::HTTunnel server 
-             to run. You will prompted for it during the installation. Please 
-             note that that Apache server must also return an HTTP 200 code 
-             for a "GET / HTTP/1.0" request. Generally if the server has an 
-             index.html file in the document root it will be ok.
+             to run. You will prompted for it during the installation. This 
+             server must allow tunnels to localhost:80. That Apache server 
+             must also return an HTTP 200 code for a "GET / HTTP/1.0" request. 
+             Generally if the server has index.html file in the document root 
+             it will be ok.
 
  
 DEPENDENCIES

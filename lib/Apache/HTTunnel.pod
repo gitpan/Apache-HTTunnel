@@ -67,25 +67,20 @@ seconds.
 The default value is 900, meaning connections idle for more than
 15 minutes will be closed.
 
-=item HTTunnelForceHost
+=item HTTunnelAllowedTunnels
 
-Specifies the forced host. Clients using this URL will not be able
-to choose the remote host.
+Specifies towards which host/port combinations this server allows tunnels
+to be established. The format is as such:
 
-  Ex: HTTunnelForceHost         somehost
+  Ex: HTTunnelAllowedTunnels    "\
+        *              => 22, \
+        myhost         => 3389 | 5800, \
+        host1 | host2  => * "
 
-The default value is undef, meaning clients can request connections
-to any host.
-
-=item HTTunnelForcePort
-
-Specifies the forced port number. Clients using this URL will not be able
-to choose the remote port number
-
-  Ex: HTTunnelForcePort         22
-
-The default value is undef, meaning clients can request connections
-to any port number.
+You can specify many sections by separating them by commas (,). Within each 
+section, multiple hosts/ports may be specified by separating them with pipes 
+(|). The asterisk (*) can be used as a wildcard, allowing any host/port.
+There is no default value. This directive is mandatory.
 
 =item HTTunnelMaxConnectTimeout
 
@@ -129,8 +124,11 @@ you will most certainly want to control which users are permitted to use
 the /httunnel URL since it can provide an entry point into your network. 
 
 For these reasons, the use of SSL and Basic Authentication is strongly 
-recommended. See the Apache documentation (mod_ssl, mod_auth) for more
-information on how to configure these features.
+recommended. See the Apache documentation (mod_ssl, mod_allow, mod_auth) 
+for more information on how to configure these features.
+
+Also, be sure to keep a tight HTTunnelAllowedTunnels that allows only access
+to the hosts/ports that are necessary.
 
 
 =head1 BUGS

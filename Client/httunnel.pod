@@ -85,20 +85,18 @@ Local address to bind to. Default is 'localhost'.
 
 Local port number to bind to. This directive is mandatory.
 
-=item remote_proto = <proto>
+=item protocol = <proto>
 
-Protocol for the tunnelled connection. Default is 'tcp', which
-happens to be the only implemented value.
+Protocol for the tunnelled connection. Default is 'tcp', possible values
+are 'tcp and 'udp'.
 
 =item remote_port = <port nb.>
 
-Remote port number. This directive is mandatory unless the server is
-configured with HTTunnelForceHost.
+Remote port number. This directive is mandatory.
 
 =item remote_host = <hostname or ip address>
 
-Remote host. This directive if mandatory unless the server is
-configured with HTTunnelForcePort.
+Remote host. This directive if mandatory.
 
 =item url = <url>
 

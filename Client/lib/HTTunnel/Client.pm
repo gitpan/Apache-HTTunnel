@@ -9,7 +9,7 @@ use IO::Select ;
 use Carp ;
 
 
-$HTTunnel::Client::VERSION = '0.03' ;
+$HTTunnel::Client::VERSION = '0.04' ;
 
 
 sub new {
@@ -26,6 +26,7 @@ sub new {
 	$url =~ s/\/+$// ;
 	$this->{__PACKAGE__}->{url} = $url ;
 	$this->{__PACKAGE__}->{pid} = 0 ;
+	$this->{__PACKAGE__}->{peer_info} = 0 ;
 
 	bless($this, $class) ;
 
@@ -40,6 +41,7 @@ sub connect {
 	my $port = shift || 0 ;
 	my $timeout = shift || 15 ;
 
+	$this->{__PACKAGE__}->{proto} = $proto ;
 	$this->{__PACKAGE__}->{fhid} = $this->_execute(
 		'connect', 
 		[$proto, $host, $port, $timeout],
@@ -66,12 +68,16 @@ sub read {
 				return undef ;
 			}
 		}
+		my $addr = undef ;
+		my $port = undef ;
 		my $data = undef ;
 		eval {
 			$data = $this->_execute(
 				'read', 
-				[$this->{__PACKAGE__}->{fhid}, $len, $timeout],
+				[$this->{__PACKAGE__}->{fhid}, $this->{__PACKAGE__}->{proto}, $len, $timeout],
 			) ;
+			($addr, $port, $data) = split(':', $data, 3) ;
+			$this->{__PACKAGE__}->{peer_info} = "$addr:$port" ;
 		} ;
 		if ((ref($@))&&(UNIVERSAL::isa($@, "HTTunnel::Client::TimeoutException"))){
 			next ;
@@ -85,6 +91,13 @@ sub read {
 }
 
 
+sub get_peer_info {
+	my $this = shift ;
+
+	return $this->{__PACKAGE__}->{peer_info} ;
+}
+
+
 sub print {
 	my $this = shift ;
 	my @data = shift ;
@@ -93,7 +106,7 @@ sub print {
 
 	$this->_execute(
 		'write',
-		[$this->{__PACKAGE__}->{fhid}],
+		[$this->{__PACKAGE__}->{fhid}, $this->{__PACKAGE__}->{proto}],
 		join("", @data),
 	) ;
 

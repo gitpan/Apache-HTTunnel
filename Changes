@@ -1,10 +1,15 @@
 Revision history for Perl extension Apache::HTTunnel.
 
+0.04  Sun Feb  6 19:38:03 EST 2005
+    - Replaced HTTunnelForceHost/HTTunnelForcePort by HTTunnelAllowedTunnels
+    - Implemented initial UDP support
+
+0.02  Wed Jan 26 20:26:42 EST 2005
+    - Documentation fixes
+
 0.01  Wed Jan 12 13:35:14 2005
 	- original version; created by h2xs 1.23 with options
 		-AX Apache::HTTunnel
 
-0.02  Wed Jan 26 20:26:42 EST 2005
-    - Documentation fixes
 
 

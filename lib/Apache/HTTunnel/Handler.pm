@@ -4,6 +4,7 @@ use strict ;
 use File::FDkeeper ;
 use Socket ;
 use IO::Socket::INET ;
+use Carp ;
 
 use Apache::RequestRec ;
 use Apache::RequestIO ;
@@ -97,8 +98,6 @@ sub connect_cmd {
 	my $host = shift @params ;
 	my $port = shift @params ;
 	my $timeout = shift @params || 15 ;
-	my $fhost = $r->dir_config('HTTunnelForceHost') ;
-	my $fport = $r->dir_config('HTTunnelForcePort') ;
 	my $max_timeout = $r->dir_config('HTTunnelMaxConnectTimeout') || 15 ;
 	if ($timeout > $max_timeout){
 		$slog->notice("HTTunnel Handler: Requested connect timeout ($timeout) decreased " .
@@ -106,11 +105,7 @@ sub connect_cmd {
 		$timeout = $max_timeout ;
 	}
 
-	die("Host parameter is required by this server") if !$host && !$fhost ;
-	die("Port parameter is required by this server") if !$port && !$fport ;
-	die("Host parameter is forced by this server") if $host && $fhost ;
-	die("Port parameter is forced by this server") if $port && $fport ;
-
+	check_access($r, $host, $port) ;
 	$slog->info("HTTunnel Handler: Connecting to $host:$port...") ;
 
 	my $sock = undef ;
@@ -146,12 +141,62 @@ sub connect_cmd {
 }
 
 
+sub check_access {
+	my $r = shift ;
+	my $host = shift ;
+	my $port = shift ;
+
+	my $slog = $r->log() ;
+	my $rules = $r->dir_config('HTTunnelAllowedTunnels') or die("HTTunnelAllowedTunnels not defined in Apache configuration file") ;
+	$rules =~ s/^\s+// ;
+	$rules =~ s/\s+$// ;
+	my @rules = split(/\s*,\s*/, $rules) ;
+	foreach my $r (@rules){
+		$slog->debug("HTTunnel Handler: Allowed (raw): $r") ;
+	}
+
+	my %allowed = () ;
+	foreach my $r (@rules){
+		my ($hosts, $ports) = split(/\s*=>\s*/, $r) ;
+		my @hosts = split(/\s*\|\s*/, $hosts) ;
+		my @ports = split(/\s*\|\s*/, $ports) ;
+
+		foreach my $h (@hosts){
+			foreach my $p (@ports){
+				my @addrs = ($h) ;
+				if ($h ne '*'){
+					my @info = gethostbyname($h) ;
+					for (my $i = 4 ; $i < scalar(@info) ; $i++){
+						push @addrs, inet_ntoa($info[$i]) ;
+					}
+				}
+				foreach my $a (@addrs){
+					$allowed{"$a:$p"} = 1 ;
+				}
+			}
+		}
+	}
+	foreach my $r (@rules){
+		$slog->debug("HTTunnel Handler: Allowed (expanded): $r") ;
+	}
+
+	if (($allowed{"$host:$port"})||($allowed{"$host:*"})||
+		($allowed{"*:$port"})||($allowed{"*:*"})){
+		$slog->notice("HTTunnel Handler: $host:$port is allowed by configuration") ;
+	}
+	else{
+		die("Permission denied for $host:$port") ;
+	}
+}
+
+
 sub read_cmd {
 	my $r = shift ;
 	my @params = @_ ;
 
 	my $slog = $r->log() ;
 	my $fhid = shift @params ;
+	my $proto = shift @params ;
 	my $len = shift @params ;
 	my $timeout = shift @params || 15 ;
 	my $max_len = $r->dir_config('HTTunnelMaxReadLength') || 131072 ;
@@ -177,7 +222,14 @@ sub read_cmd {
 		local $SIG{ALRM} = sub {die "timeout\n"} ;
 		alarm($timeout) ;
 		$slog->info("HTTunnel Handler: Reading up to $len bytes from filehandle '$fhid'\n") ;
-		$data = read_from($fh, $len) ;
+		my $peer = undef ;
+		if ($proto eq 'upd'){
+			($peer, $data) = recv_from($fh, $len) ;
+		}
+		else{
+			$peer = getpeername($fh) ;
+			$data = read_from($fh, $len) ;
+		}
 		if (! defined($data)){
 			$slog->notice("HTTunnel Handler: EOF detected on filehandle '$fhid'\n") ;
 		}
@@ -185,6 +237,10 @@ sub read_cmd {
 			my $l = length($data) ;
 			$slog->notice("HTTunnel Handler: Read $l bytes from filehandle '$fhid'\n") ;
 		}
+
+		my ($port, $addr) = sockaddr_in($peer) ;
+		$data = join(':', inet_ntoa($addr), $port, $data) ;
+
 		alarm(0) ;
 	} ;
 	if ($@){
@@ -208,6 +264,7 @@ sub write_cmd {
 
 	my $slog = $r->log() ;
 	my $fhid = shift @params ;
+	my $proto = shift @params ;
 
 	my $cl = $r->headers_in->{'Content-Length'} ;
 	defined($cl) or die("Content-Length is not defined") ;
@@ -231,7 +288,12 @@ sub write_cmd {
 
 	my $l = length($data) ;
 	$slog->info("HTTunnel Handler: Writing $l bytes to filehandle '$fhid'...") ;
-	write_to($fh, $data) ;
+	if ($proto eq 'upd'){
+		send_to($fh, $data) ;
+	}
+	else {
+		write_to($fh, $data) ;
+	}
 	$slog->notice("HTTunnel Handler: Wrote $l bytes from filehandle") ;
 
 	return (undef, 0) ;
@@ -271,6 +333,21 @@ sub read_from {
 }
 
 
+sub recv_from {
+	my $h = shift ;
+	my $bufsize = shift || 0 ;
+
+	my $buf = '' ;
+	my $res = $h->recv($buf, $bufsize) ;
+	if (! defined($res)){
+		croak("sysread error: $!") ;
+	}
+	else {
+		return ($res, $buf) ;
+	}
+}
+
+
 sub write_to {
 	my $h = shift ;
 	my $buf = shift ;
@@ -282,5 +359,21 @@ sub write_to {
 }
 
 
+sub send_to {
+	my $h = shift ;
+	my $buf = shift ;
+
+	my $res = $h->send($buf) ;
+	if (! defined($res)){
+		croak("send error: $!") ;
+	}
+}
+
+
 
 1 ;
+
+
+__DATA__
+
+

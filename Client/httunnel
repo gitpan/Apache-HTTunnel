@@ -7,6 +7,7 @@ use Getopt::Long qw(:config no_ignore_case) ;
 use IO::Socket::INET ;
 use IO::Select ;
 use IO::Pipe ;
+use IO::Handle ;
 BEGIN { eval { require Sys::Syslog } }
 use URI ;
 use HTTunnel::Client ;
@@ -18,7 +19,6 @@ $SIG{CHLD} = 'IGNORE' ;
 
 my %opts = () ;
 GetOptions(\%opts,
-	"f=s",		# configuration file
 	"h",		# help
 	"v",		# version
 	"V",		# verbose
@@ -70,7 +70,17 @@ if ($opts{d}){
 while (1){
 	my @ready = $select->can_read() ;
 	foreach my $fh (@ready){
-		my $client = $fh->accept() ;
+		my $cfg = $config->{$listeners->{$fh}} ;
+		$DEBUG = $cfg->{verbose} ;
+
+		my $client = undef ;
+		if ($cfg->{protocol} eq 'udp'){
+			$client = $fh ;
+			$select->remove($fh) ;
+		}
+		else {
+			$client = $fh->accept() ;
+		}
 		next if ! defined($client) ;
 
 		slog('notice', "Accepted connection on " . $fh->sockhost() . ':' . $fh->sockport()) ;
@@ -80,9 +90,6 @@ while (1){
 		next if ($pid) ;
 
 		# child
-		my $cfg = $config->{$listeners->{$fh}} ;
-		$DEBUG = $cfg->{verbose} ;
-
 		undef $listeners ;
 		undef $select ;
 
@@ -90,11 +97,11 @@ while (1){
 		my $reader = undef ;
 		my $hc = new My::HTTunnel::Client($cfg, keep_alive => $cfg->{http_keep_alive}) ;
 		eval {
-			local $SIG{TERM} = 'IGNORE' ;
+			local $SIG{TERM} = 'IGNORE' if $cfg->{protocol} ne 'udp' ;
 
 			my $url = new URI($cfg->{url}) ;
 			$hc->proxy(['http'], $cfg->{http_proxy}) if $cfg->{http_proxy} ;
-			$hc->connect($cfg->{remote_proto}, $cfg->{remote_host}, $cfg->{remote_port}) ;
+			$hc->connect($cfg->{protocol}, $cfg->{remote_host}, $cfg->{remote_port}) ;
 			sdebug("Remote connection to $cfg->{remote_host}:$cfg->{remote_port} established") ;
 		
 			my $lifeline = new IO::Pipe() ;
@@ -108,14 +115,25 @@ while (1){
 			while (1){
 				my @ready = $sel->can_read() ;
 				foreach my $fh (@ready){
-					my $buf = read_from($fh, $cfg->{read_length}) ;
+					my $buf = undef ;
+					if (($fh eq $client)&&($cfg->{protocol} eq 'udp')){
+						$buf = recv_from($fh, $cfg->{read_length}) ;
+					}
+					else {
+						$buf = read_from($fh, $cfg->{read_length}) ;	
+					}
 					if (! defined($buf)){
 						kill 9, $pid ;
 						$hc->close() ;
 						exit() ;
 					}
 					if ($fh eq $reader){
-						write_to($client, $buf) ;
+						if ($cfg->{protocol} eq 'udp'){
+							send_to($client, $buf) ;
+						}
+						else {
+							write_to($client, $buf) ;
+						}
 					}
 					else {
 						$hc->print($buf) ;
@@ -163,7 +181,7 @@ sub get_conf {
 	my %defaults = (
 		local_addr => 'localhost',
 		local_port => undef,
-		remote_proto => 'tcp',
+		protocol => 'tcp',
 		remote_port => undef,
 		remote_host => undef,
 
@@ -240,11 +258,10 @@ sub start_listeners {
 
 	foreach my $s (values %{$config}){
 		my $server = new IO::Socket::INET(
-			Proto => 'tcp',
+			Proto => $s->{protocol},
 			LocalAddr => $s->{local_addr} || undef,
 			LocalPort => $s->{local_port},
-			Reuse => 1,
-			Listen => SOMAXCONN,
+			($s->{protocol} eq 'tcp' ? (Reuse => 1, Listen => SOMAXCONN) : ()),
 		) ;
 		die("Can't create server socket $s->{local_addr}:$s->{local_port}: $!") unless $server ;
 		$select->add($server) ;
@@ -262,15 +279,18 @@ sub start_reader {
 	my $lifeline = shift ;
 
 	sdebug("Starting reader process...") ;
-	my $reader = new IO::Pipe() ;
+	my ($reader, $writer) = () ;
+	socketpair($reader, $writer, AF_UNIX, ($cfg->{protocol} eq 'udp' ? SOCK_DGRAM : SOCK_STREAM), PF_UNSPEC) ;
+	shutdown($reader, 1) ;
+	shutdown($writer, 0) ;
+
 	my $pid = fork() ;
 	if (! defined($pid)){
 		return undef ;
 	}
 	elsif (! $pid){
 		# child
-		$reader->writer() ;
-		$reader->autoflush(1) ;
+		$writer->autoflush(1) ;
 		$lifeline->reader() ;
 
 		while (1){
@@ -284,11 +304,10 @@ sub start_reader {
 				sdebug("Reader process ended ($pid)") ;
 				exit() ;
 			}
-			write_to($reader, $data) ;
+			write_to($writer, $data) ;
 		}
 	}
 	else {
-		$reader->reader() ;
 		$lifeline->writer() ;
 		sdebug("Reader process started ($pid)") ;
 	}
@@ -315,6 +334,21 @@ sub read_from {
 }
 
 
+sub recv_from {
+	my $h = shift ;
+	my $bufsize = shift || 0 ;
+
+	my $buf = '' ;
+	my $res = $h->recv($buf, $bufsize) ;
+	if (! defined($res)){
+		die("sysread error: $!") ;
+	}
+	else {
+		return ($res, $buf) ;
+	}
+}
+
+
 sub write_to {
 	my $h = shift ;
 	my $buf = shift ;
@@ -322,6 +356,17 @@ sub write_to {
 	my $res = print $h $buf ;
 	if (! $res){
 		die("print error: $!") ;
+	}
+}
+
+
+sub send_to {
+	my $h = shift ;
+	my $buf = shift ;
+
+	my $res = $h->send($buf) ;
+	if (! defined($res)){
+		die("send error: $!") ;
 	}
 }
 

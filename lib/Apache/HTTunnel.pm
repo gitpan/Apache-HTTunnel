@@ -4,7 +4,7 @@ use strict ;
 use Carp ;
 
 
-$Apache::HTTunnel::VERSION = '0.03' ;
+$Apache::HTTunnel::VERSION = '0.04' ;
 
 
 sub import {
@@ -62,7 +62,7 @@ PerlSetVar		HTTunnelMaxReadLength		131072
 # In seconds.
 PerlSetVar		HTTunnelMaxReadTimeout		15
 
-# Connections thatremina inactive after this amount of time will be closed.
+# Connections that remain inactive after this amount of time will be closed.
 # In seconds.
 PerlSetVar		HTTunnelConnectionTimeout	900
 
@@ -75,4 +75,6 @@ PerlPostConfigRequire	Apache/HTTunnel.pm
 <Location "/httunnel">
   SetHandler		perl-script
   PerlResponseHandler	Apache::HTTunnel
+  PerlSetVar            HTTunnelAllowedTunnels "\
+    localhost => 22|53|80 "
 </Location>

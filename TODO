@@ -1,6 +1,5 @@
 CODE:
-	- Test with SSL
+	- Test more with SSL
 	- Test with more kinds of proxies
-	- UDP support
 
 DOCS:

@@ -113,6 +113,13 @@ Here is an example:
 Asks the C<Apache::HTTunnel> server to close a previously established 
 connection.
 
+=item get_peer_info ( )
+
+The C<get_peer_info> method returns information about the remote connection.
+A string containing the IP address and port number, separated by a colon (:) 
+is returned. This method can be useful with UDP connections to validate the 
+sender of each packet.
+
 =item request_callback ( REQUEST )
 
 The C<request_callback> method is a callback method that can be used to 
