@@ -9,7 +9,7 @@ use IO::Select ;
 use Carp ;
 
 
-$HTTunnel::Client::VERSION = '0.01' ;
+$HTTunnel::Client::VERSION = '0.02' ;
 
 
 sub new {

@@ -7,10 +7,10 @@ Apache::HTTunnel - Universal HTTP tunnel using Apache + mod_perl
 
   # on the server: in /etc/httpd/conf.d/perl_httunnel.conf
     PerlSetVar              HTTunnelFifo          /var/lib/httunnel/httunnel.sock
-    PerlPostConfigRequire	Apache/HTTunnel.pm
+    PerlPostConfigRequire   Apache/HTTunnel.pm
     <Location "/httunnel">
       SetHandler      perl-script
-      PerlResponseHandler	Apache::HTTunnel
+      PerlResponseHandler   Apache::HTTunnel
     </Location>
 
   # on the client: in /etc/httunnel.d/server_ssh.cfg
@@ -49,7 +49,7 @@ time. The other directives can be specified at the Location level.
 
 =item HTTunnelFifo
 
-Specifies the path tpo be used for the fifo that allows communication
+Specifies the path to be used for the fifo that allows communication
 between the keeper process and the Apache workers.
 
   Ex: HTTunnelFifo              /var/lib/httunnel/httunnel.sock
@@ -91,7 +91,7 @@ to any port number.
 
 When a client sends a connection request, it may specify a timeout
 value for the connection. In order to prevent blocking in the Apache child
-in cases when the connection cannot blocks, this directive limits the 
+in cases when the connection blocks, this directive limits the 
 connection timeout that may be specified by the client.
 
   Ex: HTTunnelMaxConnectTimeout 10
@@ -108,7 +108,7 @@ prematurely, C<Apache::HTTunnel> will purposely time-out read requests
 that take longer than HTTunnelReadTimeout seconds. A special response 
 is sent to the client telling it to retry the read request.
 
-  Ex: HTTunnelMaxReadTimeout       10
+  Ex: HTTunnelMaxReadTimeout    10
 
 The default value is 15 seconds. It is best to keep the value relatively
 low to prevent blocking in the Apache child.
@@ -130,7 +130,7 @@ the /httunnel URL since it can provide an entry point into your network.
 
 For these reasons, the use of SSL and Basic Authentication is strongly 
 recommended. See the Apache documentation (mod_ssl, mod_auth) for more
-information on how to configure these faeturesl.
+information on how to configure these features.
 
 
 =head1 BUGS

@@ -146,8 +146,8 @@ attempted. The default is 131072 bytes.
 All HTTP read request are interrupted after C<read_timeout> by
 L<Apache::HTTunnel>. However, L<HTTunnel::Client> will keep on
 sending HTTP read requests until data is received. You can lower
-this value if your proxy interrupting the HTTP requests abruptly,
-causing L<HTTunnel::Client> to not function corectly. The default
+this value if your proxy is interrupting the HTTP requests abruptly,
+causing L<HTTunnel::Client> to not function correctly. The default
 is 15 seconds.
 
 =item verbose = <0 or 1 or 2>
@@ -173,7 +173,7 @@ I'm sure there are some in there :)
 
 =head1 SEE ALSO
 
-L<HTTunnel::Client>, C<LWP::UserAgent>
+L<HTTunnel::Client>, L<LWP::UserAgent>
 
 
 =head1 AUTHOR

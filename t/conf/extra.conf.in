@@ -14,7 +14,7 @@ PerlPostConfigRequire	Apache/HTTunnel.pm
   Order deny,allow
   Authname 'httunnel'
   AuthType Basic
-  AuthUserFile @ServerRoot@/.htpasswd
+  AuthUserFile @ServerRoot@/htpasswd
   require valid-user
 </Location>
 

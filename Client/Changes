@@ -4,3 +4,7 @@ Revision history for Perl extension HTTunnel::Client.
 	- original version; created by h2xs 1.23 with options
 		-AX HTTunnel::Client
 
+0.02  Wed Jan 26 20:26:42 EST 2005
+    - Documentation fixes
+
+

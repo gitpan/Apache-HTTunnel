@@ -9,6 +9,7 @@ lib/Apache/HTTunnel.pod
 lib/Apache/HTTunnel/Keeper.pm
 lib/Apache/HTTunnel/Handler.pm
 t/Apache-HTTunnel.t
+t/htpasswd
 t/conf/extra.conf.in
 t/htdocs/index.html
 Client/Changes

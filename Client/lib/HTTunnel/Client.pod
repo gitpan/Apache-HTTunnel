@@ -62,7 +62,7 @@ Asks the C<Apache::HTTunnel> server to read up to C<LEN> bytes from
 the established remote connection. An exception is thrown if an error occurs.
 
 When trying to read, C<HTTunnel::Client> will establish an HTTP connection
-to the <Apache::HTTunnel> server asking that C<LEN> bytes be read. If no 
+to the C<Apache::HTTunnel> server asking that C<LEN> bytes be read. If no 
 data is available after C<TIMEOUT> seconds (the default value is 15 seconds),
 the HTTP connection is closed by the server and the C<read> method will establish
 a new one. This will go on until some data or EOF is returned.
@@ -93,7 +93,7 @@ Here is an example:
     $reader->reader() ;
     $lifeline->writer() ;
 	
-	# Read data from $reader...
+    # Read data from $reader...
   }
   else {
     $reader->writer() ;
@@ -130,7 +130,7 @@ implementation does nothing.
 
 =head1 JAVA CLIENT
 
-For those who might be interested, the is a Java version of 
+For those who might be interested, there is a Java version of 
 L<HTTunnel::Client> included in the distribution. The API is
 the basically the same.
 
