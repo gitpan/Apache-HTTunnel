@@ -1,0 +1,6 @@
+Revision history for Perl extension Apache::HTTunnel.
+
+0.01  Wed Jan 12 13:35:14 2005
+	- original version; created by h2xs 1.23 with options
+		-AX Apache::HTTunnel
+
