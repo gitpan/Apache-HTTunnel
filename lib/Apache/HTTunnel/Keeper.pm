@@ -3,15 +3,15 @@ package Apache::HTTunnel::Keeper ;
 use strict ;
 use File::FDkeeper ;
 use IO::Pipe ;
-use Apache::ServerUtil ;
-use Apache::Directive ;
-use Apache::Log ;
+use Apache2::ServerUtil ;
+use Apache2::Directive ;
+use Apache2::Log ;
 
 
 # Get configuration info from the Apache config file.
-my $s = Apache->server() ;
+my $s = Apache2::ServerUtil->server() ;
 my $slog = $s->log() ;
-my $tree = Apache::Directive::conftree() ;
+my $tree = Apache2::Directive::conftree() ;
 my $apache_user = $tree->lookup('User') ;
 my $apache_uid = getpwnam($apache_user) ;
 my $apache_group = $tree->lookup('Group') ;

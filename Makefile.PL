@@ -1,5 +1,4 @@
 use strict ;
-use Apache2() ;
 use ModPerl::MM() ;
 use Apache::TestMM qw(test clean) ;
 use Apache::TestRunPerl() ;
@@ -14,7 +13,7 @@ ModPerl::MM::WriteMakefile(
     NAME              => 'Apache::HTTunnel',
     VERSION_FROM      => 'lib/Apache/HTTunnel.pm', 
     PREREQ_PM         => {
-		mod_perl => 1.999021,
+		mod_perl => 2.0,
 		'File::FDkeeper' => 0,
 	}, 
 	clean => { 
@@ -32,11 +31,11 @@ install::
 MAKEFILE
 
 	if ($^O eq 'linux') { 
-		$make = <<'MAKEFILE';
+		$make .= <<'MAKEFILE';
 
 install::
 	mkdir -p /etc/httpd/conf.d
-	$(TEST_F) /etc/httpd/conf/httpd.conf || $(PERL) -MApache::HTTunnel=sample_config > /etc/httpd/conf.d/perl_httunnel.conf
+	$(TEST_F) /etc/httpd/conf.d/perl_httunnel.conf || $(PERL) -MApache::HTTunnel=sample_config > /etc/httpd/conf.d/perl_httunnel.conf
 
 MAKEFILE
 	}

@@ -46,7 +46,7 @@ C<LWP::UserAgent> constructor.
 Asks the C<Apache::HTTunnel> server to establish a connection of protocol
 C<PROTO> to C<HOST>:C<PORT>. An exception is thrown if an error occurs.
 
-At this time, the only accepted value for C<PROTO> is 'tcp'.
+Accepted values for C<PROTO> are 'tcp' and 'udp'.
 
 =item print ( DATA )
 

@@ -1,5 +1,11 @@
 Revision history for Perl extension Apache::HTTunnel.
 
+0.06  Sat Jan 21 15:05:36 EST 2006
+    - Fixed a bug with a missing alarm() reset
+    - Fixed UDP support
+    - Improved get_peer_info performance
+	- Added a (incomplete) Javascript client
+
 0.05  Mon Feb 14 10:37:26 EST 2005
     - Fixed screwed-up test suite dependencies
 

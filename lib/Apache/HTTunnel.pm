@@ -4,7 +4,7 @@ use strict ;
 use Carp ;
 
 
-$Apache::HTTunnel::VERSION = '0.05' ;
+$Apache::HTTunnel::VERSION = '0.06' ;
 
 
 sub import {

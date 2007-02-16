@@ -11,6 +11,7 @@ use IO::Handle ;
 BEGIN { eval { require Sys::Syslog } }
 use HTTunnel::Client ;
 use Data::Dumper ;
+use POSIX qw(setsid) ;
 
 
 $SIG{CHLD} = 'IGNORE' ;
@@ -60,8 +61,15 @@ my $config = get_conf(@ARGV[0]) ;
 my ($select, $listeners) = start_listeners($config) ;
 
 if ($opts{d}){
+    chdir('/') or sdie("Can't chdir to /: $!") ;
+    open(STDIN, '</dev/null') or sdie("Can't open /dev/null for reading: $!") ;
+    open(STDOUT, '>>/dev/null') or sdie("Can't open /dev/null for appending: $!") ;
+    open(STDERR, '>>/dev/null') or sdie("Can't open /dev/null for appending: $!") ;
+    setsid() or sdie("Can't start a new session: $!") ;
+    umask(0) ;
+
 	my $pid = fork() ;
-	die("Can't fork: $!") unless defined($pid) ;
+	sdie("Can't fork: $!") unless defined($pid) ;
 	exit(0) if ($pid != 0) ;
 }
 
@@ -264,7 +272,7 @@ sub start_listeners {
 		die("Can't create server socket $s->{local_addr}:$s->{local_port}: $!") unless $server ;
 		$select->add($server) ;
 		$listeners->{$server} = $s->{__section__} ;
-		slog('notice', "Listening for connections on $s->{local_addr}:$s->{local_port}") ;
+		slog('notice', "Listening for $s->{protocol} connections on $s->{local_addr}:$s->{local_port}") ;
 	}
 
 	return ($select, $listeners) ;

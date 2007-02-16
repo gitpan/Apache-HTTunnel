@@ -11,6 +11,8 @@ PerlPostConfigRequire	Apache/HTTunnel.pm
   SetHandler			perl-script
   PerlResponseHandler	Apache::HTTunnel 
   PerlSetVar			HTTunnelAllowedTunnels  "\
-	localhost => @Port@ "
+	localhost             => @Port@, \
+	localhost.localdomain => @Port@, \
+	"
 </Location>
 

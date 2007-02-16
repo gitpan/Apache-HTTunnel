@@ -21,7 +21,7 @@ set up HTTP tunnels with L<Apache::HTTunnel>.
 
 =item path
 
-Path to a configuration file or directory. if C<path> is a directory,
+Path to a configuration file or directory. If C<path> is a directory,
 all .conf files found are loaded.
 
 =item -V
@@ -50,8 +50,8 @@ Prints a short usage message and exits.
 
 =head1 CONFIGURATION FILE FORMAT
 
-The configuration file format is similar to .ini files ant to that of
-L<stunnel>. It is build up of sections and directives. Here is an
+The configuration file format is similar to .ini files and to that of
+C<stunnel>. It is built up of sections and directives. Here is an
 example:
 
   global_key_1 = value1
@@ -109,7 +109,7 @@ The HTTP protocol to use. The default is 'HTTP/1.1'.
 
 =item http_keep_alive = <0 or 1>
 
-Whether to use persistent HTTP connections. Aloow not required, this
+Whether to use persistent HTTP connections. Although not required, this
 increases performance quite a bit. The default is '1'.
 
 =item http_username = <username>
@@ -150,7 +150,7 @@ is 15 seconds.
 
 =item verbose = <0 or 1 or 2>
 
-Controls debug output. The default is as such: '2' is the -VV option
+Controls debug output. The default is as such: '2' if the -VV option
 is used, '1' if the -V option is used, '0' otherwise.
 
 =back

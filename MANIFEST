@@ -21,6 +21,7 @@ Client/META.yml
 Client/lib/HTTunnel/Client.pm
 Client/lib/HTTunnel/Client.pod
 Client/lib/HTTunnel/Client.java
+Client/lib/HTTunnel/Client.js
 Client/httunnel
 Client/httunnel.pod
 Client/httunnel.sysv

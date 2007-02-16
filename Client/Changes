@@ -1,5 +1,8 @@
 Revision history for Perl extension HTTunnel::Client.
 
+0.06  Sat Jan 21 15:05:36 EST 2006
+	- Added a (incomplete) Javascript client
+
 0.05  Mon Feb 14 10:37:26 EST 2005
     - Fixed screwed-up test suite dependencies
 

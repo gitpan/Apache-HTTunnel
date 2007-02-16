@@ -35,7 +35,20 @@ public class Client {
 		fhid = execute("connect", 
 			new String [] { proto, host, 
 				(new Integer(port)).toString(), (new Integer(timeout)).toString() }
-		) ;	
+		) ;
+		if (proto.equals("tcp")){
+			StringTokenizer st = new StringTokenizer(fhid, ":", true) ;
+			addr = st.nextToken() ; 
+			st.nextToken() ; // waste ':'
+			port = st.nextToken() ; 
+			st.nextToken() ; // waste ':'
+			StringBuffer sbfhid = new StringBuffer() ;
+			while (st.hasMoreTokens()){
+				sbfhid.append(st.nextToken()) ;
+			}
+			fhid = sbfhid.toString() ;
+			peer_info = addr + ":" + port ;
+		}
 
 		return 1 ;
 	}
@@ -64,17 +77,19 @@ public class Client {
 					new String [] { fhid, proto, (new Integer(len)).toString(),
 						(new Integer(timeout)).toString() }
 				) ;
-				StringTokenizer st = new StringTokenizer(data, ":", true) ;
-				addr = st.nextToken() ; 
-				st.nextToken() ; // waste ':'
-				port = st.nextToken() ; 
-				st.nextToken() ; // waste ':'
-				StringBuffer sbdata = new StringBuffer() ;
-				while (st.hasMoreTokens()){
-					sbdata.append(st.nextToken()) ;
+				if (proto.equals("udp")){
+					StringTokenizer st = new StringTokenizer(data, ":", true) ;
+					addr = st.nextToken() ; 
+					st.nextToken() ; // waste ':'
+					port = st.nextToken() ; 
+					st.nextToken() ; // waste ':'
+					StringBuffer sbdata = new StringBuffer() ;
+					while (st.hasMoreTokens()){
+						sbdata.append(st.nextToken()) ;
+					}
+					peer_info = addr + ":" + port ;
+					data = sbdata.toString() ;
 				}
-				peer_info = addr + ":" + port ;
-				data = sbdata.toString() ;
 			}
 			catch (ClientTimeoutException hcte){
 				continue ;
@@ -114,6 +129,7 @@ public class Client {
 				"close",
 				new String [] { fhid }
 			) ;
+			fhid = null ;
 
 			return 1 ;
 		}

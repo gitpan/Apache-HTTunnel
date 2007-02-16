@@ -9,7 +9,7 @@ use IO::Select ;
 use Carp ;
 
 
-$HTTunnel::Client::VERSION = '0.05' ;
+$HTTunnel::Client::VERSION = '0.06' ;
 
 
 sub new {
@@ -42,10 +42,19 @@ sub connect {
 	my $timeout = shift || 15 ;
 
 	$this->{__PACKAGE__}->{proto} = $proto ;
-	$this->{__PACKAGE__}->{fhid} = $this->_execute(
+	my $fhid = $this->_execute(
 		'connect', 
 		[$proto, $host, $port, $timeout],
 	) ;
+	if ($proto eq 'tcp'){
+		my ($addr, $port) = () ;
+		($addr, $port, $fhid) = split(':', $fhid, 3) ;
+		$this->{__PACKAGE__}->{fhid} = $fhid ;
+		$this->{__PACKAGE__}->{peer_info} = "$addr:$port" ;
+	}
+	else {
+		$this->{__PACKAGE__}->{fhid} = $fhid ;
+	}
 
 	return 1 ;
 }
@@ -76,8 +85,10 @@ sub read {
 				'read', 
 				[$this->{__PACKAGE__}->{fhid}, $this->{__PACKAGE__}->{proto}, $len, $timeout],
 			) ;
-			($addr, $port, $data) = split(':', $data, 3) ;
-			$this->{__PACKAGE__}->{peer_info} = "$addr:$port" ;
+			if ($this->{__PACKAGE__}->{proto} eq 'udp'){
+				($addr, $port, $data) = split(':', $data, 3) ;
+				$this->{__PACKAGE__}->{peer_info} = "$addr:$port" ;
+			}
 		} ;
 		if ((ref($@))&&(UNIVERSAL::isa($@, "HTTunnel::Client::TimeoutException"))){
 			next ;
@@ -122,6 +133,7 @@ sub close {
 			'close',
 			[$this->{__PACKAGE__}->{fhid}],
 		) ;
+		$this->{__PACKAGE__}->{fhid} = undef ;
 
 		return 1 ;
 	}
@@ -186,7 +198,7 @@ sub request_callback {
 
 sub response_callback {
 	my $shift = shift ;
-	my $req = shift ;
+	my $res = shift ;
 }
 
 

@@ -6,12 +6,12 @@ use Socket ;
 use IO::Socket::INET ;
 use Carp ;
 
-use Apache::RequestRec ;
-use Apache::RequestIO ;
-use Apache::RequestUtil ;
-use Apache::Response ;
+use Apache2::RequestRec ;
+use Apache2::RequestIO ;
+use Apache2::RequestUtil ;
+use Apache2::Response ;
 use APR::Table ;
-use Apache::Const qw(:common :http) ;
+use Apache2::Const qw(:common :http) ;
 
 
 my $fdk = undef ;
@@ -23,11 +23,12 @@ sub handler {
 	my $slog = $r->log() ;
 
 	if ($r->method() ne 'POST'){
-		return Apache::HTTP_METHOD_NOT_ALLOWED() ;
+		return Apache2::Const::HTTP_METHOD_NOT_ALLOWED() ;
 	}
 	my $code = OK ;
 	my $resp = undef ;
 	my $timeout = 0 ;
+	my $extra = undef ;
 	eval {
 		if (! defined($fdk)){
 			# Connect to the file descriptor storage process
@@ -46,16 +47,16 @@ sub handler {
 		my $cmd = shift @params ;
 		$slog->info("HTTunnel Handler: Processing '$cmd' command ($path_info)") ;
 		if ($cmd eq 'connect'){
-			($resp, $timeout) = connect_cmd($r, @params) ;
+			($resp, $timeout, $extra) = connect_cmd($r, @params) ;
 		}
 		elsif ($cmd eq 'read'){
-			($resp, $timeout) = read_cmd($r, @params) ;
+			($resp, $timeout, $extra) = read_cmd($r, @params) ;
 		}
 		elsif ($cmd eq 'write'){
-			($resp, $timeout) = write_cmd($r, @params) ;
+			($resp, $timeout, $extra) = write_cmd($r, @params) ;
 		}
 		elsif ($cmd eq 'close'){
-			($resp, $timeout) = close_cmd($r, @params) ;
+			($resp, $timeout, $extra) = close_cmd($r, @params) ;
 		}
 		else {
 			die("Invalid command $cmd ($path_info)") ;
@@ -67,14 +68,17 @@ sub handler {
 		$slog->error("HTTunnel Handler: $@") ;
 	}
 	else {
+		if (defined($extra)){
+			$extra .= ':' ;
+		}
 		if ($timeout){
-			$resp = 'okt' ;
+			$resp = 'okt' . $extra ;
 		}
 		elsif (length($resp) == 0){
-			$resp = 'okn' ;
+			$resp = 'okn' . $extra ;
 		}
 		else {
-			$resp = 'okd' . $resp ;
+			$resp = 'okd' . $extra . $resp ;
 		}
 	}
 
@@ -109,6 +113,7 @@ sub connect_cmd {
 	$slog->info("HTTunnel Handler: Connecting to $host:$port...") ;
 
 	my $sock = undef ;
+	my $peer_info = undef ;
 	eval {
 		local $SIG{ALRM} = sub {die "timeout\n"} ;
 		alarm($timeout) ;
@@ -117,6 +122,15 @@ sub connect_cmd {
 			PeerAddr => $host,
 			PeerPort => $port,
 		) ;
+		die("Error connecting to $host:$port: $!") unless defined($sock) ;
+
+		if ($proto eq 'tcp'){
+			my $peer = getpeername($sock) ;
+			my ($port, $addr) = sockaddr_in($peer) ;
+			$peer_info = join(':', inet_ntoa($addr), $port) ;
+		}
+
+		alarm(0) ;
 	} ;
 	if ($@){
 		if ($@ eq "timeout\n"){
@@ -137,7 +151,7 @@ sub connect_cmd {
 	my $fhid = $fdk->put($sock) ;
 	$slog->notice("HTTunnel Handler: Filehandle '$fhid' put") ;
 
-	return ($fhid, 0) ;
+	return ($fhid, 0, $peer_info) ;
 }
 
 
@@ -218,16 +232,18 @@ sub read_cmd {
 	$slog->notice("HTTunnel Handler: Filehandle '$fhid' gotten") ;
 
 	my $timed_out = 0 ;
+	my $peer_info = undef ;
 	eval {
 		local $SIG{ALRM} = sub {die "timeout\n"} ;
 		alarm($timeout) ;
 		$slog->info("HTTunnel Handler: Reading up to $len bytes from filehandle '$fhid'\n") ;
-		my $peer = undef ;
-		if ($proto eq 'upd'){
+		if ($proto eq 'udp'){
+			my $peer = undef ;
 			($peer, $data) = recv_from($fh, $len) ;
+			my ($port, $addr) = sockaddr_in($peer) ;
+			$peer_info = join(':', inet_ntoa($addr), $port) ;
 		}
 		else{
-			$peer = getpeername($fh) ;
 			$data = read_from($fh, $len) ;
 		}
 		if (! defined($data)){
@@ -237,9 +253,6 @@ sub read_cmd {
 			my $l = length($data) ;
 			$slog->notice("HTTunnel Handler: Read $l bytes from filehandle '$fhid'\n") ;
 		}
-
-		my ($port, $addr) = sockaddr_in($peer) ;
-		$data = join(':', inet_ntoa($addr), $port, $data) ;
 
 		alarm(0) ;
 	} ;
@@ -254,7 +267,7 @@ sub read_cmd {
 		}
 	}
 
-	return ($data, $timed_out) ;	
+	return ($data, $timed_out, $peer_info) ;	
 }
 
 
@@ -288,13 +301,13 @@ sub write_cmd {
 
 	my $l = length($data) ;
 	$slog->info("HTTunnel Handler: Writing $l bytes to filehandle '$fhid'...") ;
-	if ($proto eq 'upd'){
+	if ($proto eq 'udp'){
 		send_to($fh, $data) ;
 	}
 	else {
 		write_to($fh, $data) ;
 	}
-	$slog->notice("HTTunnel Handler: Wrote $l bytes from filehandle") ;
+	$slog->notice("HTTunnel Handler: Wrote $l bytes to filehandle '$fhid'") ;
 
 	return (undef, 0) ;
 }
@@ -338,7 +351,7 @@ sub recv_from {
 	my $bufsize = shift || 0 ;
 
 	my $buf = '' ;
-	my $res = $h->recv($buf, $bufsize) ;
+	my $res = recv($h, $buf, $bufsize, 0) ;
 	if (! defined($res)){
 		croak("sysread error: $!") ;
 	}
@@ -363,7 +376,9 @@ sub send_to {
 	my $h = shift ;
 	my $buf = shift ;
 
-	my $res = $h->send($buf) ;
+	my $peer = getpeername($h) ;
+	my $res = send($h, $buf, 0, $peer) ;
+
 	if (! defined($res)){
 		croak("send error: $!") ;
 	}

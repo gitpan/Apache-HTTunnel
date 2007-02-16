@@ -2,7 +2,7 @@ use strict ;
 use warnings ;
 use Apache::Test () ;
 use Apache::TestRequest qw(GET) ;
-use Apache::Const qw(:http) ;
+use Apache2::Const qw(:http) ;
 
 # Here we simply run the Client tests after setting up the correct URL.
 my $url = Apache::TestRequest::module2url('', {path => '/httunnel'}) ;
@@ -16,5 +16,5 @@ require "Client/t/HTTunnel-Client.t" ;
 
 # Exceptions
 my $resp = GET $HTTunnel::Client::Test::URL ;
-ok($resp->code(), Apache::HTTP_METHOD_NOT_ALLOWED()) ;
+ok($resp->code(), Apache2::Const::HTTP_METHOD_NOT_ALLOWED()) ;
 
