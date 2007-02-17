@@ -155,16 +155,10 @@ function HTTunnelClient(_url) {
 	}
 
 
-	// This code is isolated since it is not portable.
+	// This code is isolated since it is less portable.
 	this._xmlhttprequest = function(url, data, callback){
-		var req = null ;
-		if (window.XMLHttpRequest){
-			req = new XMLHttpRequest() ;
-		}
-		else {
-			req = new ActiveXObject("Microsoft.XMLHTTP") ;
-		}
-		req.open("POST", url, callback) ;
+		var req = new XMLHttpRequest() ;
+		req.open("POST", url, (callback ? true : false)) ;
 		this.request_callback(req) ;
 		if (callback){
 			var htc = this ;

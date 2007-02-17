@@ -236,7 +236,7 @@ sub read_cmd {
 	eval {
 		local $SIG{ALRM} = sub {die "timeout\n"} ;
 		alarm($timeout) ;
-		$slog->info("HTTunnel Handler: Reading up to $len bytes from filehandle '$fhid'\n") ;
+		$slog->info("HTTunnel Handler: Reading up to $len bytes from filehandle '$fhid'") ;
 		if ($proto eq 'udp'){
 			my $peer = undef ;
 			($peer, $data) = recv_from($fh, $len) ;
@@ -247,11 +247,11 @@ sub read_cmd {
 			$data = read_from($fh, $len) ;
 		}
 		if (! defined($data)){
-			$slog->notice("HTTunnel Handler: EOF detected on filehandle '$fhid'\n") ;
+			$slog->notice("HTTunnel Handler: EOF detected on filehandle '$fhid'") ;
 		}
 		else {
 			my $l = length($data) ;
-			$slog->notice("HTTunnel Handler: Read $l bytes from filehandle '$fhid'\n") ;
+			$slog->notice("HTTunnel Handler: Read $l bytes from filehandle '$fhid'") ;
 		}
 
 		alarm(0) ;
