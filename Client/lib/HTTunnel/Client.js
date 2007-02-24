@@ -157,7 +157,7 @@ function HTTunnelClient(_url) {
 
 	// This code is isolated since it is less portable.
 	this._xmlhttprequest = function(url, data, callback){
-		var req = new XMLHttpRequest() ;
+		var req = (window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP")) ;
 		req.open("POST", url, (callback ? true : false)) ;
 		this.request_callback(req) ;
 		if (callback){
